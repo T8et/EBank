@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Database/Database.csproj" />
+  <Project Path="MiniBank/MiniBank.csproj" />
+  <Project Path="RestAPI/RestAPI.csproj" Id="5e631988-244d-4551-9727-31fb612180a0" />
+</Solution>
