@@ -1,7 +1,10 @@
 ﻿using Database.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Cryptography;
 
 namespace RestAPI.Controllers
 {
@@ -28,7 +31,7 @@ namespace RestAPI.Controllers
             return Ok(item);
         }
 
-        [HttpGet("{accId}")]
+        [HttpGet("get/accid")]
         public IActionResult GetAccById(int accId)
         {
             var item = from u in _db.BtUsers
@@ -68,10 +71,10 @@ namespace RestAPI.Controllers
             return Ok("Data Created Successfully");
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("pin/accid")]
         public IActionResult CreatePin(int id,string pin)
         {
-            var item = _db.BtAccs.Where(x=>x.UserId==id).FirstOrDefault();
+            var item = _db.BtAccs.Where(x=>x.AccId==id).FirstOrDefault();
 
             if (item is null) return BadRequest();
             
@@ -81,7 +84,7 @@ namespace RestAPI.Controllers
             return Ok("Pin Updated Successfully");
         }
 
-        [HttpPatch("{fid}")]
+        [HttpPatch("trns/accid")]
         public IActionResult Transfer(int fid, int tid, int amount)
         {
             var frAcc_data = _db.BtAccs.Where(x=>x.AccId==fid).FirstOrDefault();
@@ -106,11 +109,11 @@ namespace RestAPI.Controllers
               .OrderByDescending(x => x.TranId)
               .FirstOrDefault();
 
-            string tr_id = "0";
-            if (itemtran is not null) tr_id = itemtran.TranId + "01";
+            int tr_id = 0;
+            if (itemtran is not null) tr_id = Convert.ToInt32(itemtran.TranId) + 2;
 
             BtTran tran = new BtTran();
-            tran.TranId = tr_id;
+            tran.TranId = tr_id.ToString();
             tran.TranFrAccId = fid;
             tran.TranToAccId = tid;
             tran.Amount = amount;
@@ -121,6 +124,81 @@ namespace RestAPI.Controllers
 
             return Ok("Transaction Completed");
 
+        }
+
+        [HttpPatch("depo/accid")]
+        public IActionResult MakeDeposit(int accid, int dept_amt, string pass)
+        {
+            var dataitem = _db.BtAccs.Where(x => x.AccId == accid).FirstOrDefault();
+
+            if (dataitem is null) return BadRequest("Account Data not exist");
+
+            if(dataitem.AccPin == pass)
+            {
+                dataitem.AccBalance += dept_amt;
+                _db.SaveChanges();
+
+                var itemtran = _db.BtTrans
+                    .OrderByDescending(x => x.TranId)
+                    .FirstOrDefault();
+
+                int tr_id = 0;
+                if (itemtran is not null) tr_id = Convert.ToInt32(itemtran.TranId) + 2;
+
+                BtTran tran = new BtTran();
+                tran.TranId = tr_id.ToString();
+                tran.TranFrAccId = accid;
+                tran.TranToAccId = accid;
+                tran.Amount = dept_amt;
+                tran.TranDate = DateTime.Now;
+                tran.TranSts = 2;
+                _db.BtTrans.Add(tran);
+                _db.SaveChanges();
+
+                return Ok("Deposit Success");
+            }
+            else
+            {
+                return BadRequest("Password is incorrect");
+            }
+        }
+
+        [HttpPatch("wthd/accid")]
+        public IActionResult MakeWithdrawl(int accid, int with_amt, string pass)
+        {
+            var dataitem = _db.BtAccs.Where(x => x.AccId == accid).FirstOrDefault();
+
+            if (dataitem is null) return BadRequest("Account Data not exist");
+
+            if (dataitem.AccPin == pass)
+            {
+                var updamt = dataitem.AccBalance - with_amt;
+                dataitem.AccBalance = updamt;
+                _db.SaveChanges();
+
+                var itemtran = _db.BtTrans
+                    .OrderByDescending(x => x.TranId)
+                    .FirstOrDefault();
+
+                int tr_id = 0;
+                if (itemtran is not null) tr_id = Convert.ToInt32(itemtran.TranId) + 2;
+
+                BtTran tran = new BtTran();
+                tran.TranId = tr_id.ToString();
+                tran.TranFrAccId = accid;
+                tran.TranToAccId = accid;
+                tran.Amount = with_amt;
+                tran.TranDate = DateTime.Now;
+                tran.TranSts = 3;
+                _db.BtTrans.Add(tran);
+                _db.SaveChanges();
+
+                return Ok("WithDrawl Success");
+            }
+            else
+            {
+                return BadRequest("Password is incorrect");
+            }
         }
     }
 }
