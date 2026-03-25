@@ -145,6 +145,7 @@ namespace RestAPI.Controllers
             return Ok(userData);
         }
 
+        //Create Account with ADO.Net
         [HttpPost("acc_id/create")]
         public IActionResult UpdatePin(BtUser acc_data)
         { 
