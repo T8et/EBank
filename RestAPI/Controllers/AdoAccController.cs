@@ -25,6 +25,12 @@ namespace RestAPI.Controllers
 
             public string? Acc_Pin { get; set; }
         }
+
+        public class ReturnData1
+        {
+            public int User_Id { get; set; }
+        }
+
         protected readonly string _connection = "Data Source=.;Initial Catalog=MeBank;User Id=sa;Password=p@ssw0rd;Trust Server Certificate=True";
 
         [HttpGet("acc_all")]
@@ -62,6 +68,7 @@ namespace RestAPI.Controllers
                     Acc_Pin = "******"
                 });
             }
+            reader.Close();
 
             con.Close();
             return Ok(UserData);
@@ -137,5 +144,63 @@ namespace RestAPI.Controllers
 
             return Ok(userData);
         }
+
+        [HttpPost("acc_id/create")]
+        public IActionResult UpdatePin(BtUser acc_data)
+        { 
+            SqlConnection conn = new SqlConnection( _connection);
+            conn.Open();
+            List<ReturnData1> UserData = new List<ReturnData1>();
+            string basequery = @"INSERT INTO [dbo].[BT_User]
+                                   ([User_Name]
+                                   ,[User_Phone]
+                                   ,[User_Email]
+                                   ,[User_Address])
+                                 VALUES
+                                   (@username
+                                   ,@userphone
+                                   ,@useremail
+                                   ,@useradd)";
+
+            SqlCommand bcmd = new SqlCommand(basequery, conn);
+            if (acc_data.UserName is null) return BadRequest();
+            bcmd.Parameters.AddWithValue("@username",acc_data.UserName);
+            if (acc_data.UserPhone is null) return BadRequest();
+            bcmd.Parameters.AddWithValue("@userphone", acc_data.UserPhone);
+            bcmd.Parameters.AddWithValue("@useremail", acc_data.UserEmail);
+            bcmd.Parameters.AddWithValue("@useradd", acc_data.UserAddress);
+            int result = bcmd.ExecuteNonQuery();
+            if(result == 0) return BadRequest();
+
+            string exequery = "Select User_Id from BT_User where User_Phone=@phone";
+            SqlCommand ecmd = new SqlCommand(@exequery, conn);
+            ecmd.Parameters.AddWithValue("@phone", acc_data.UserPhone);
+            var re = ecmd.ExecuteScalar();
+            int aid = 0;
+            if(re is not null)
+            {
+                aid = Convert.ToInt32(re);
+            }
+
+            string query = @"INSERT INTO [dbo].[BT_Acc]
+                                    ([User_Id]
+                                   ,[Acc_Balance]
+                                   ,[Acc_Pin])
+                             VALUES
+                                    (@uid,
+                                   1000
+                                   ,@pin)";
+
+
+            SqlCommand cmd = new SqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@uid", aid);
+            cmd.Parameters.AddWithValue("@pin", "123456");
+            cmd.ExecuteNonQuery();
+
+            conn.Close();
+
+            return Ok("Account Created!");
+        }
+
     }
 }
