@@ -2,4 +2,5 @@
   <Project Path="Database/Database.csproj" />
   <Project Path="MiniBank/MiniBank.csproj" />
   <Project Path="RestAPI/RestAPI.csproj" Id="5e631988-244d-4551-9727-31fb612180a0" />
+  <Project Path="Services/Services.csproj" Id="4abd1c7d-19d5-4952-a430-818daff22be9" />
 </Solution>
