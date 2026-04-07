@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Database.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Services.AccServices;
@@ -29,6 +30,14 @@ namespace RestAPI.Controllers
             if(item is null) return BadRequest();
 
             return Ok(item);
+        }
+
+        [HttpPost]
+        public IActionResult CreateAccount(BtUser user) 
+        {
+            _service.AccountData(user);
+
+            return Ok(user);
         }
     }
 }

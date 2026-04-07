@@ -54,5 +54,34 @@ namespace Services.AccServices
 
             return ret_data.ToList();
         }
+
+        public AccData AccountData(BtUser user)
+        {
+            AccData data = new AccData()
+            {
+                User_Name = user.UserName,
+                User_Email = user.UserEmail,
+                User_Address = user.UserAddress,
+                User_Phone = user.UserPhone,
+                Acc_Balance = 1000,
+                Acc_Pin = "111222"
+            };
+
+            _db.BtUsers.Add(user);
+            _db.SaveChanges();
+
+            var item = _db.BtUsers
+              .OrderByDescending(x => x.UserId)
+              .FirstOrDefault();
+            BtAcc bt = new BtAcc();
+            bt.UserId = item!.UserId;
+            bt.AccBalance = 1000;
+            bt.AccPin = "1111";
+
+            _db.BtAccs.Add(bt);
+            _db.SaveChanges();
+
+            return data;
+        }
     }
 }
