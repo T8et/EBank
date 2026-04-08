@@ -83,5 +83,66 @@ namespace Services.AccServices
 
             return data;
         }
+
+        public string UpdatePin(int id,string pin) 
+        {
+            if (pin != null && id != 0)
+            {
+                var item = _db.BtAccs.Where(x=>x.AccId==id).FirstOrDefault();
+                if (item is null) return "Data not Exists";
+                item.AccPin = pin;
+                _db.SaveChanges();
+                return "Update Success";
+            } 
+            else
+            {
+                return "Bad Request";
+            }
+        }
+
+        public string Transfer(int fid,int tid,int amt)
+        {
+            var sender_data = _db.BtAccs.Where(x => x.AccId == fid).FirstOrDefault();
+            if (sender_data is null) return "Account Not Exists.";
+
+
+            var recvr_data = _db.BtAccs.Where(x => x.AccId == tid).FirstOrDefault();
+            if (recvr_data is null) return "Account Not Exists.";
+
+            if (amt > 0)
+            {
+                var sender_bal = sender_data.AccBalance;
+                if (amt > sender_bal) return "OS Amount is not Sufficient.";
+
+                sender_bal = sender_bal - amt;
+                sender_data.AccBalance = sender_bal;
+                _db.SaveChanges();
+
+                var recvr_bal = recvr_data.AccBalance;
+                recvr_bal += amt;
+                recvr_data.AccBalance = recvr_bal;
+                _db.SaveChanges();
+
+                int tr_id = 0;
+                var itemtran = _db.BtTrans
+                .OrderByDescending(x => x.TranId)
+                .FirstOrDefault();
+
+                if (itemtran is not null) tr_id = Convert.ToInt32(itemtran.TranId) + 2;
+
+                BtTran tran = new BtTran();
+                tran.TranId = tr_id.ToString();
+                tran.TranFrAccId = fid;
+                tran.TranToAccId = tid;
+                tran.Amount = amt;
+                tran.TranDate = DateTime.Now;
+                tran.TranSts = 1;
+                _db.BtTrans.Add(tran);
+                _db.SaveChanges();
+
+                return "Transfer Success";
+            }
+            return "Bad Request";
+        }
     }
 }

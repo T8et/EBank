@@ -39,5 +39,19 @@ namespace RestAPI.Controllers
 
             return Ok(user);
         }
+
+        [HttpPut]
+        public IActionResult UpdatePin(int id, string pin)
+        {
+            string item = _service.UpdatePin(id, pin);
+            return Ok(item);
+        }
+
+        [HttpPost("{Transfer}")]
+        public IActionResult Transfer(int fid, int tid, int amt)
+        {
+            string item = _service.Transfer(fid, tid, amt);
+            return Ok(item);
+        }
     }
 }
