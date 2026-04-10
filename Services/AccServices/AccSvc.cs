@@ -1,8 +1,10 @@
 ﻿using Database.Models;
+using Microsoft.EntityFrameworkCore;
 using Services.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -143,6 +145,102 @@ namespace Services.AccServices
                 return "Transfer Success";
             }
             return "Bad Request";
+        }
+
+        public string Deposit(int id, int amt)
+        {
+            if (amt <= 0) return "Invalid amount";
+
+            var data = _db.BtAccs.FirstOrDefault(x => x.AccId == id);
+            if (data == null) return "Account Not Exists";
+
+            using var transaction = _db.Database.BeginTransaction();
+
+            try
+            {
+                data.AccBalance += amt;
+                _db.SaveChanges();
+
+                var itemtran = _db.BtTrans
+                    .OrderByDescending(x => x.TranDate)
+                    .FirstOrDefault();
+
+                string nitem = "001";
+                if (itemtran is not null)
+                {
+                    nitem = Convert.ToString(Convert.ToInt32(itemtran.TranId) + 2);
+                }
+
+                var tran = new BtTran
+                {
+                    TranId = nitem,
+                    TranFrAccId = id,
+                    TranToAccId = id,
+                    Amount = amt,
+                    TranDate = DateTime.Now,
+                    TranSts = 2
+                };
+
+                _db.BtTrans.Add(tran);
+                _db.SaveChanges();
+
+                transaction.Commit();
+                return "Deposit Success";
+            }
+            catch
+            {
+                transaction.Rollback();
+                return "Deposit Failed";
+            }
+        }
+
+        public string Withdrawl(int id, int amt)
+        {
+            if (amt <= 0) return "Invalid amount";
+
+            var data = _db.BtAccs.FirstOrDefault(x => x.AccId == id);
+            if (data == null) return "Account Not Exists";
+
+            using var transaction = _db.Database.BeginTransaction();
+
+            try
+            {
+                var balance = data.AccBalance - amt;
+                data.AccBalance = balance;
+                if (balance < 0) { return "amount not valid"; }
+                _db.SaveChanges();
+
+                var itemtran = _db.BtTrans
+                    .OrderByDescending(x => x.TranDate)
+                    .FirstOrDefault();
+
+                string nitem = "001";
+                if (itemtran is not null)
+                {
+                    nitem = Convert.ToString(Convert.ToInt32(itemtran.TranId) + 2);
+                }
+
+                var tran = new BtTran
+                {
+                    TranId = nitem,
+                    TranFrAccId = id,
+                    TranToAccId = id,
+                    Amount = amt,
+                    TranDate = DateTime.Now,
+                    TranSts = 3
+                };
+
+                _db.BtTrans.Add(tran);
+                _db.SaveChanges();
+
+                transaction.Commit();
+                return "Deposit Success";
+            }
+            catch
+            {
+                transaction.Rollback();
+                return "Deposit Failed";
+            }
         }
     }
 }

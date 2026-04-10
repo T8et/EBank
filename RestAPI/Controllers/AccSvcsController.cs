@@ -47,10 +47,24 @@ namespace RestAPI.Controllers
             return Ok(item);
         }
 
-        [HttpPost("{Transfer}")]
+        [HttpPost("Transfer")]
         public IActionResult Transfer(int fid, int tid, int amt)
         {
             string item = _service.Transfer(fid, tid, amt);
+            return Ok(item);
+        }
+
+        [HttpPost("Deposit")]
+        public IActionResult Deposit(int id, int amt)
+        {
+            string item = _service.Deposit(id, amt);
+            return Ok(item);
+        }
+
+        [HttpPost("Withdrawl")]
+        public IActionResult WithDrawl(int id, int amt)
+        {
+            string item = _service.Withdrawl(id, amt);
             return Ok(item);
         }
     }
